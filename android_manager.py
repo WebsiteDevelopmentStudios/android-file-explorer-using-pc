@@ -7,6 +7,7 @@ import time
 C_PURPLE = "\033[38;2;186;85;211m"   # Medium Orchid Purple
 C_NEON = "\033[38;2;224;102;255m"     # Bright Neon Purple
 C_CYAN = "\033[38;2;0;238;238m"       # Cyan accents for highlights
+C_RED = "\033[38;2;255;64;64m"        # Red accent for warnings
 C_WHITE = "\033[97m"
 C_RESET = "\033[0m"
 
@@ -25,7 +26,7 @@ def scan_animation():
     print(f"\n{C_CYAN}[SYSTEM] Initializing secure data bridge...{C_RESET}")
     bar_width = 30
     for i in range(bar_width + 1):
-        time.sleep(0.015)  # Fast, punchy load speed
+        time.sleep(0.01)  
         progress = "█" * i + "░" * (bar_width - i)
         percent = int((i / bar_width) * 100)
         sys.stdout.write(f"\r{C_PURPLE}[ {progress} ] {C_NEON}{percent}% COMPLETED{C_RESET}")
@@ -45,32 +46,28 @@ def run_command(binary, args):
         result = subprocess.run([exe_path] + args, capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        print(f"{C_CYAN}[-] System Error: {e.stderr.strip()}{C_RESET}")
         return None
     except FileNotFoundError:
-        print(f"{C_CYAN}[-] Binary Missing: {binary} not found.{C_RESET}")
         return None
 
-def check_devices():
-    """Displays real-time hardware sync layout."""
-    clear_screen()
-    neon_banner("HARDWARE SYNC MATRIX")
+def scan_usb_hardware():
+    """Scans and filters active USB paths for device telemetry mapping."""
     adb_out = run_command("adb.exe", ["devices"])
     fastboot_out = run_command("fastboot.exe", ["devices"])
     
-    print(f"\n{C_PURPLE}[ ADB CHANNEL ]{C_RESET}")
-    if adb_out and len(adb_out.split('\n')) > 1:
-        print(f"{C_WHITE}{adb_out}{C_RESET}")
-    else:
-        print(f" ╰─ {C_CYAN}NO ACTIVE PHONE IN DEBUG MODE{C_RESET}")
-        
-    print(f"\n{C_PURPLE}[ FASTBOOT CHANNEL ]{C_RESET}")
-    if fastboot_out:
-        print(f"{C_WHITE}{fastboot_out}{C_RESET}")
-    else:
-        print(f" ╰─ {C_CYAN}NO ACTIVE PHONE IN BOOTLOADER MODE{C_RESET}")
+    adb_connected = False
+    fastboot_connected = False
     
-    input(f"\n{C_NEON}Press Enter to return to Nexus...{C_RESET}")
+    if adb_out and len(adb_out.split('\n')) > 1:
+        # Check if the output actually contains a device ID line
+        lines = adb_out.split('\n')[1:]
+        if any(line.strip() and 'device' in line for line in lines):
+            adb_connected = True
+            
+    if fastboot_out and fastboot_out.strip():
+        fastboot_connected = True
+        
+    return adb_connected, fastboot_connected
 
 # ================= NEON PURPLE FILE EXPLORER =================
 def custom_file_viewer():
@@ -79,14 +76,7 @@ def custom_file_viewer():
     
     while True:
         clear_screen()
-        neon_banner("CYBER FILE EXPLORER v2.0")
-        
-        # Feature: Live Storage Capacity Metric Widget
-        storage_info = run_command("adb.exe", ["shell", "df -h /sdcard"])
-        if storage_info and len(storage_info.split('\n')) > 1:
-            stats = storage_info.split('\n')[1].split()
-            if len(stats) >= 5:
-                print(f"{C_CYAN}STORAGE METRICS: Total: {stats[1]} | Used: {stats[2]} | Free: {stats[3]} ({stats[4]} utilized){C_RESET}")
+        neon_banner("CYBER FILE EXPLORER v2.1")
         
         print(f"{C_PURPLE}VIRTUAL PATH ➔ {C_WHITE}{current_dir}{C_RESET}")
         print(f"{C_PURPLE}-" * 60 + f"{C_RESET}")
@@ -95,12 +85,11 @@ def custom_file_viewer():
         
         raw_list = run_command("adb.exe", ["shell", f"ls -pa {current_dir}"])
         if raw_list is None:
-            input(f"{C_CYAN}[!] Error communicating with core interface. Press Enter...{C_RESET}")
+            input(f"{C_RED}[!] Error communicating with file architecture. Ensure USB Debugging is allowed. Press Enter...{C_RESET}")
             break
             
         items = [line for line in raw_list.split('\n') if line.strip() and line != './']
         
-        # Display folder index rows with alternating neon tints
         for idx, item in enumerate(items, 1):
             color = C_NEON if item.endswith('/') else C_WHITE
             print(f"  {C_PURPLE}[{idx:02d}]{color} {item}{C_RESET}")
@@ -120,7 +109,7 @@ def custom_file_viewer():
             continue
         elif choice.startswith('mkdir '):
             new_folder = choice.split(' ', 1)[1]
-            run_command("adb.exe", ["shell", f"mkdir -p {current_dir}{new_folder}"])
+            run_command("adb.exe", ["shell", f"mkdir -p \"{current_dir}{new_folder}\""])
             continue
             
         try:
@@ -132,9 +121,9 @@ def custom_file_viewer():
                 
                 if cmd == 'dl':
                     print(f"{C_CYAN}[*] Downloading package to memory card root...{C_RESET}")
-                    run_command("adb.exe", ["pull", target_path, "."])
+                    run_command("adb.exe", ["pull", f"\"{target_path}\"", "."])
                 elif cmd == 'del':
-                    confirm = input(f"{C_CYAN}[!] SAFEGUARD: Erase {selected_item}? (y/n): {C_RESET}")
+                    confirm = input(f"{C_RED}[!] SAFEGUARD: Erase {selected_item}? (y/n): {C_RESET}")
                     if confirm.lower() == 'y':
                         run_command("adb.exe", ["shell", f"rm -rf \"{target_path}\""])
                 continue
@@ -143,9 +132,9 @@ def custom_file_viewer():
                 local_file = input(f"{C_CYAN}Enter absolute PC/Card filename to push: {C_RESET}")
                 if os.path.exists(local_file):
                     print(f"{C_CYAN}[*] Uploading stream to device environment...{C_RESET}")
-                    run_command("adb.exe", ["push", local_file, current_dir])
+                    run_command("adb.exe", ["push", f"\"{local_file}\"", f"\"{current_dir}\""])
                 else:
-                    print(f"{C_CYAN}[-] File node could not be matched local side.{C_RESET}")
+                    print(f"{C_RED}[-] File node could not be matched local side.{C_RESET}")
                     time.sleep(1.5)
                 continue
                 
@@ -164,35 +153,53 @@ def custom_file_viewer():
                     input(f"\n{C_NEON}Press Enter to reset visual environment...{C_RESET}")
                     
         except (ValueError, IndexError):
-            pass # Invalid options safely refresh without locking up execution loop
+            pass
 
 def main():
-    # Make sure modern Windows Console environment interprets custom color streams correctly
-    os.system('') 
+    os.system('') # Initialize ANSI colors for legacy Windows Command Prompts
     
     while True:
         clear_screen()
-        neon_banner("NEXUS DEVICE CONTROL HUBA")
-        print(f"  {C_PURPLE}[1]{C_NEON} Scan Core Matrix Connections (ADB / Fastboot)")
-        print(f"  {C_PURPLE}[2]{C_NEON} Launch Interactive Custom Neon File Explorer")
-        print(f"  {C_PURPLE}[3]{C_NEON} Warm-Reboot Target Into Bootloader (Fastboot)")
-        print(f"  {C_PURPLE}[4]{C_NEON} Flash Modified Image Component to 'boot' block")
-        print(f"  {C_PURPLE}[5]{C_NEON} Escape Fastboot State to Operating System")
-        print(f"  {C_PURPLE}[6]{C_NEON} Terminate Active Session")
+        neon_banner("NEXUS DEVICE CONTROL HUB")
+        
+        # Real-time Auto USB Scanner Engine
+        adb_active, fastboot_active = scan_usb_hardware()
+        
+        print(f"{C_PURPLE}[ HARDWARE TELEMETRY ]{C_RESET}")
+        if adb_active:
+            print(f" ╰─ LINK ACTIVE: {C_NEON}Android Device Detected (ADB Mode){C_RESET}")
+            fb_check = run_command("adb.exe", ["shell", "getprop ro.boot.flash.locked"])
+            if fb_check is None:
+                print(f" ╰─ DEVICE CAPABILITY: {C_RED}[!] FASTBOOT PROTOCOL UNSUPPORTED / LOCKED BY OEM (File Browsing Still Accessible){C_RESET}")
+        elif fastboot_active:
+            print(f" ╰─ LINK ACTIVE: {C_CYAN}Android Device Detected (Fastboot Mode){C_RESET}")
+        else:
+            print(f" ╰─ LINK ACTIVE: {C_WHITE}Scanning... No USB Debugging Target Connected.{C_RESET}")
+            
+        print(f"\n{C_PURPLE}=" * 60 + f"{C_RESET}")
+        print(f"  {C_NEON}1.{C_WHITE} Launch Interactive Custom Neon File Explorer")
+        print(f"  {C_NEON}2.{C_WHITE} Warm-Reboot Target Into Bootloader (Fastboot)")
+        print(f"  {C_NEON}3.{C_WHITE} Flash Modified Image Component to 'boot' block")
+        print(f"  {C_NEON}4.{C_WHITE} Escape Fastboot State to Operating System")
+        print(f"  {C_NEON}5.{C_WHITE} Terminate Active Session & Kill Server")
         print(f"{C_PURPLE}-" * 60 + f"{C_RESET}")
         
-        choice = input(f"{C_NEON}Select Terminal Route (1-6): {C_RESET}")
+        choice = input(f"{C_NEON}Select Terminal Route (1-5): {C_RESET}").strip()
         
         if choice == '1':
-            check_devices()
+            if adb_active:
+                custom_file_viewer()
+            else:
+                input(f"\n{C_RED}[!] Error: File explorer requires an active ADB USB connection. Press Enter...{C_RESET}")
         elif choice == '2':
-            custom_file_viewer()
+            if adb_active:
+                clear_screen()
+                print(f"{C_CYAN}[*] Injecting hardware bootloader interrupt...{C_RESET}")
+                run_command("adb.exe", ["reboot", "bootloader"])
+                time.sleep(2)
+            else:
+                input(f"\n{C_RED}[!] Error: No active ADB device found to send reboot command. Press Enter...{C_RESET}")
         elif choice == '3':
-            clear_screen()
-            print(f"{C_CYAN}[*] Injecting hardware bootloader interrupt...{C_RESET}")
-            run_command("adb.exe", ["reboot", "bootloader"])
-            time.sleep(2)
-        elif choice == '4':
             clear_screen()
             neon_banner("IMAGE INJECTION SEGMENT")
             img_file = input(f"{C_CYAN}Target filename located on memory card (e.g., patched_boot.img): {C_RESET}")
@@ -202,15 +209,17 @@ def main():
                 if confirm == "CONFIRM":
                     run_command("fastboot.exe", ["flash", "boot", img_file])
             else:
-                print(f"{C_CYAN}[-] Target image data path empty.{C_RESET}")
+                print(f"{C_RED}[-] Target image data path empty.{C_RESET}")
                 time.sleep(2)
-        elif choice == '5':
+        elif choice == '4':
             clear_screen()
             print(f"{C_CYAN}[*] Dropping system bypass loops, rebooting normal layout...{C_RESET}")
             run_command("fastboot.exe", ["reboot"])
             time.sleep(2)
-        elif choice == '6':
+                elif choice == '5':
             clear_screen()
+            print(f"{C_CYAN}[*] Shutting down background ADB server subsystems...{C_RESET}")
+            run_command("adb.exe", ["kill-server"]) # This prevents the file lock issue
             print(f"{C_NEON}Session safely terminated. Safe removal authorized.{C_RESET}")
             break
 
