@@ -56,7 +56,9 @@ def custom_file_viewer():
                 if sel.endswith('/'): path = os.path.normpath(os.path.join(path, sel)).replace('\\', '/') + '/'
                 else:
                     ui(f"VIEWING: {sel}")
-                    print(f"{C_W}{run_cmd('adb.exe', ['shell', f'cat \"{path}{sel}\"']) or '[Binary Data]'}{C_X}\n" + f"{C_P}="*60)
+                    cat_cmd = 'cat "' + path + sel + '"'
+                    file_data = run_cmd('adb.exe', ['shell', cat_cmd]) or '[Binary Data]'
+                    print(f"{C_W}{file_data}{C_X}\n" + f"{C_P}=" * 60)
                     input(f"\n{C_N}Press Enter to return...{C_X}")
         except: pass
 
