@@ -184,7 +184,7 @@ def main():
         print(f"  {C_NEON}5.{C_WHITE} Terminate Active Session & Kill Server")
         print(f"{C_PURPLE}-" * 60 + f"{C_RESET}")
         
-        choice = input(f"{C_NEON}Select Terminal Route (1-5): {C_RESET}").strip()
+       choice = input(f"{C_NEON}Select Terminal Route (1-5): {C_RESET}").strip()
         
         if choice == '1':
             if adb_active:
@@ -216,10 +216,10 @@ def main():
             print(f"{C_CYAN}[*] Dropping system bypass loops, rebooting normal layout...{C_RESET}")
             run_command("fastboot.exe", ["reboot"])
             time.sleep(2)
-                elif choice == '5':
+        elif choice == '5':
             clear_screen()
             print(f"{C_CYAN}[*] Shutting down background ADB server subsystems...{C_RESET}")
-            run_command("adb.exe", ["kill-server"]) # This prevents the file lock issue
+            run_command("adb.exe", ["kill-server"])
             print(f"{C_NEON}Session safely terminated. Safe removal authorized.{C_RESET}")
             break
 
