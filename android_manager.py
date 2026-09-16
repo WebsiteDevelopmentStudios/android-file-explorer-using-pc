@@ -20,20 +20,30 @@ def scan_usb():
     return is_adb, bool(fb and fb.strip())
 
 def launch_visual_explorer():
-    # Detects the internal extraction workspace route used by PyInstaller binaries
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     xplorer_bin = os.path.join(base_path, "xplorer.exe")
-    target_workspace = r"E:\android_manager_tool"
-
-    ui("LAUNCHING VISUAL FILE BROWSER")
-    print(f"{C_C}[SYSTEM] Initializing Custom Purple Interface Engine...{C_X}")
+    
+    # Target path where local memory card files sync up
+    target_workspace = r"E:\android_manager_tool\tablet_sync"
+    
+    ui("SYNCING TABLET FILES")
+    if not os.path.exists(target_workspace):
+        os.makedirs(target_workspace)
+        
+    print(f"{C_C}[SYSTEM] Synchronizing active file systems via ADB connection...{C_X}")
+    
+    # Background sync pulls individual common tablet paths directly onto the E: drive workspace
+    run_cmd("adb.exe", ["pull", "/sdcard/Download", target_workspace])
+    run_cmd("adb.exe", ["pull", "/sdcard/DCIM", target_workspace])
+    run_cmd("adb.exe", ["pull", "/sdcard/Documents", target_workspace])
+    
+    print(f"{C_N}[SYSTEM] Initializing Custom Purple Interface Engine...{C_X}")
     time.sleep(1)
 
     if os.path.exists(xplorer_bin):
-        # Spawns your custom UI process model independently on demand
+        # Spawns your custom UI process model looking directly at the synced folder
         subprocess.Popen([xplorer_bin, target_workspace])
     else:
-        # Fallback to standard explorer view paths if drive mount mapping shifts
         print(f"{C_R}[!] Internal visual package missing. Using system fallback...{C_X}")
         time.sleep(1.5)
         os.system(f"start explorer {target_workspace}")
