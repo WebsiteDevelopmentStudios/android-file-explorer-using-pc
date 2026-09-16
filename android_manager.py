@@ -26,16 +26,15 @@ def launch_visual_explorer():
     # Target path where local memory card files sync up
     target_workspace = r"E:\android_manager_tool\tablet_sync"
     
-    ui("SYNCING TABLET FILES")
+    ui("SYNCING COMPLETE STORAGE")
     if not os.path.exists(target_workspace):
         os.makedirs(target_workspace)
         
-    print(f"{C_C}[SYSTEM] Synchronizing active file systems via ADB connection...{C_X}")
+    print(f"{C_C}[SYSTEM] Mirroring complete virtual partition via ADB connection...{C_X}")
+    print(f"{C_W}(Note: This may take a moment depending on total device file size){C_X}")
     
-    # Background sync pulls individual common tablet paths directly onto the E: drive workspace
-    run_cmd("adb.exe", ["pull", "/sdcard/Download", target_workspace])
-    run_cmd("adb.exe", ["pull", "/sdcard/DCIM", target_workspace])
-    run_cmd("adb.exe", ["pull", "/sdcard/Documents", target_workspace])
+    # Pulls the entire internal storage root directory into the target workspace
+    run_cmd("adb.exe", ["pull", "/sdcard/.", target_workspace])
     
     print(f"{C_N}[SYSTEM] Initializing Custom Purple Interface Engine...{C_X}")
     time.sleep(1)
