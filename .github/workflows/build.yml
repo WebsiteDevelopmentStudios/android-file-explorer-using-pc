@@ -2,12 +2,12 @@ name: Build Executable
 
 on:
   push:
-    branches: [ "main" ] # Triggers the worker whenever you push code to main
-  workflow_dispatch:      # Allows you to manually click "Run workflow" on GitHub
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest # Tells GitHub to use a Windows worker machine
+    runs-on: windows-latest
 
     steps:
     - name: Checkout Code
@@ -24,8 +24,14 @@ jobs:
         pip install pyinstaller
 
     - name: Build with PyInstaller
-      run: |
-        pyinstaller --onefile --add-data "adb.exe;." --add-data "AdbWinApi.dll;." --add-data "AdbWinUsbApi.dll;." --add-data "fastboot.exe;." --add-data "xplorer.exe;." android_manager.py
+      run: >
+        pyinstaller --onefile 
+        --add-data "adb.exe;." 
+        --add-data "AdbWinApi.dll;." 
+        --add-data "AdbWinUsbApi.dll;." 
+        --add-data "fastboot.exe;." 
+        --add-data "xplorer.exe;." 
+        android_manager.py
 
     - name: Upload Finished EXE as Artifact
       uses: actions/upload-artifact@v4
