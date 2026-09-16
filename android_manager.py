@@ -22,25 +22,29 @@ def scan_usb():
 def launch_visual_explorer():
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     xplorer_bin = os.path.join(base_path, "xplorer.exe")
-    
-    # Target path where local memory card files sync up
     target_workspace = r"E:\android_manager_tool\tablet_sync"
     
-    ui("SYNCING COMPLETE STORAGE")
+    ui("SYNCING LIVE WORKSPACE")
     if not os.path.exists(target_workspace):
         os.makedirs(target_workspace)
         
-    print(f"{C_C}[SYSTEM] Mirroring complete virtual partition via ADB connection...{C_X}")
-    print(f"{C_W}(Note: This may take a moment depending on total device file size){C_X}")
+    print(f"{C_C}[SYSTEM] Initializing background file channel bridges...{C_X}")
     
-    # Pulls the entire internal storage root directory into the target workspace
-    run_cmd("adb.exe", ["pull", "/sdcard/.", target_workspace])
+    # ⚡ OPTIMIZATION: Pull only high-volume folders directly to avoid system cache file lag
+    # Using Popen launches these transfers quietly in the background without locking your screen!
+    b_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    adb_exe = os.path.join(b_path, "adb.exe")
+    adb_path = adb_exe if os.path.exists(adb_exe) else "adb.exe"
     
-    print(f"{C_N}[SYSTEM] Initializing Custom Purple Interface Engine...{C_X}")
+    subprocess.Popen([adb_path, "pull", "/sdcard/Download", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.Popen([adb_path, "pull", "/sdcard/DCIM", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.Popen([adb_path, "pull", "/sdcard/Documents", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.Popen([adb_path, "pull", "/sdcard/Pictures", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    print(f"{C_N}[SYSTEM] Spawning Neon Purple GUI Environment instantly...{C_X}")
     time.sleep(1)
 
     if os.path.exists(xplorer_bin):
-        # Spawns your custom UI process model looking directly at the synced folder
         subprocess.Popen([xplorer_bin, target_workspace])
     else:
         print(f"{C_R}[!] Internal visual package missing. Using system fallback...{C_X}")
