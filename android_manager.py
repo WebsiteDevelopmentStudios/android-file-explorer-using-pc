@@ -30,12 +30,12 @@ def launch_visual_explorer():
         
     print(f"{C_C}[SYSTEM] Initializing background file channel bridges...{C_X}")
     
-    # ⚡ OPTIMIZATION: Pull only high-volume folders directly to avoid system cache file lag
-    # Using Popen launches these transfers quietly in the background without locking your screen!
     b_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     adb_exe = os.path.join(b_path, "adb.exe")
     adb_path = adb_exe if os.path.exists(adb_exe) else "adb.exe"
     
+    # ⚡ Parallel streams including your custom DEATH folder for near-instant loading
+    subprocess.Popen([adb_path, "pull", "/sdcard/DEATH", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.Popen([adb_path, "pull", "/sdcard/Download", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.Popen([adb_path, "pull", "/sdcard/DCIM", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.Popen([adb_path, "pull", "/sdcard/Documents", target_workspace], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
