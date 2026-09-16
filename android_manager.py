@@ -19,48 +19,24 @@ def scan_usb():
     is_adb = any(l.strip() and 'device' in l for l in adb.split('\n')[1:]) if adb and len(adb.split('\n')) > 1 else False
     return is_adb, bool(fb and fb.strip())
 
-def custom_file_viewer():
-    path = "/sdcard/"
-    while True:
-        ui("CYBER FILE EXPLORER v2.2")
-        print(f"{C_P}VIRTUAL PATH ➔ {C_W}{path}\n" + f"{C_P}-" * 60 + f"\n{C_C}[SYSTEM] Mapping bridge topology...{C_X}")
-        for i in range(31):
-            time.sleep(0.005)
-            sys.stdout.write(f"\r{C_P}[ {'█'*i + '░'*(30-i)} ] {C_N}{int((i/30)*100)}% COMPLETED{C_X}")
-        
-        raw = run_cmd("adb.exe", ["shell", f"ls -pa {path}"])
-        if raw is None:
-            input(f"\n{C_R}[!] Bridge link failed. Press Enter...{C_X}"); break
-        items = [l for l in raw.split('\n') if l.strip() and l != './']
-        
-        print("\n")
-        for idx, item in enumerate(items, 1):
-            print(f"  {C_P}[{idx:02d}]{C_N if item.endswith('/') else C_W} {item}{C_X}")
-        print(f"{C_P}-" * 60 + f"\n{C_C}SHORTCUTS:{C_X} [num] Dive | '..' Back | 'dl [num]' Pull | 'del [num]' Wipe | 'up' Push | 'exit' Close")
-        
-        cmd = input(f"\n{C_N}NEXUS-SHELL> {C_X}").strip()
-        if cmd.lower() == 'exit': break
-        elif cmd == '..': path = (os.path.dirname(path.rstrip('/')) + '/').replace('//', '/')
-        try:
-            if cmd.startswith(('dl ', 'del ')):
-                action, idx = cmd.split(' ')
-                target = os.path.normpath(os.path.join(path, items[int(idx)-1])).replace('\\', '/')
-                if action == 'dl': run_cmd("adb.exe", ["pull", f"\"{target}\"", "."])
-                elif action == 'del' and input(f"{C_R}Erase {items[int(idx)-1]}? (y/n): {C_X}").lower() == 'y':
-                    run_cmd("adb.exe", ["shell", f"rm -rf \"{target}\""])
-            elif cmd == 'up':
-                f = input(f"{C_C}Local file name to push: {C_X}")
-                if os.path.exists(f): run_cmd("adb.exe", ["push", f"\"{f}\"", f"\"{path}\""])
-            else:
-                sel = items[int(cmd)-1]
-                if sel.endswith('/'): path = os.path.normpath(os.path.join(path, sel)).replace('\\', '/') + '/'
-                else:
-                    ui(f"VIEWING: {sel}")
-                    cat_cmd = 'cat "' + path + sel + '"'
-                    file_data = run_cmd('adb.exe', ['shell', cat_cmd]) or '[Binary Data]'
-                    print(f"{C_W}{file_data}{C_X}\n" + f"{C_P}=" * 60)
-                    input(f"\n{C_N}Press Enter to return...{C_X}")
-        except: pass
+def launch_visual_explorer():
+    # Detects the internal extraction workspace route used by PyInstaller binaries
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    xplorer_bin = os.path.join(base_path, "xplorer.exe")
+    target_workspace = r"E:\android_manager_tool"
+
+    ui("LAUNCHING VISUAL FILE BROWSER")
+    print(f"{C_C}[SYSTEM] Initializing Custom Purple Interface Engine...{C_X}")
+    time.sleep(1)
+
+    if os.path.exists(xplorer_bin):
+        # Spawns your custom UI process model independently on demand
+        subprocess.Popen([xplorer_bin, target_workspace])
+    else:
+        # Fallback to standard explorer view paths if drive mount mapping shifts
+        print(f"{C_R}[!] Internal visual package missing. Using system fallback...{C_X}")
+        time.sleep(1.5)
+        os.system(f"start explorer {target_workspace}")
 
 def main():
     os.system('')
@@ -78,7 +54,7 @@ def main():
         print(f"\n{C_P}=" * 60 + f"\n  {C_N}1.{C_W} Launch Interactive Neon File Explorer\n  {C_N}2.{C_W} Warm-Reboot Target Into Fastboot\n  {C_N}3.{C_W} Inject Custom Image Payload to 'boot' partition\n  {C_N}4.{C_W} Force Warm-Reboot Target back to System\n  {C_N}5.{C_W} Terminate Matrix Core & Kill Server\n" + f"{C_P}-" * 60)
         
         ch = input(f"{C_N}Route selection (1-5): {C_X}").strip()
-        if ch == '1' and adb_on: custom_file_viewer()
+        if ch == '1' and adb_on: launch_visual_explorer()
         elif ch == '2' and adb_on: ui("INJECTING INTERRUPT"); run_cmd("adb.exe", ["reboot", "bootloader"]); time.sleep(2)
         elif ch == '3':
             ui("IMAGE INJECTION SEGMENT")
